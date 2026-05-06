@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏛️ Voyage to Ancient Greece</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=IM+Fell+English:ital@0;1&family=Press+Start+2P&family=Lexend:wght@300;400;600&family=Comic+Neue:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.cdnfonts.com/css/open-dyslexic">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+<style>
+:root {
+  --bg: #0d1b2a;
+  --bg2: #1a2d42;
+  --surface: #243447;
+  --surface2: #2e4058;
+  --gold: #d4a843;
+  --gold2: #f0c860;
+  --gold3: #8b6914;
+  --parchment: #f5ede0;
+  --parchment2: #e8d5b8;
+  --text: #f5ede0;
+  --text-muted: #9ab;
+  --accent: #c0392b;
+  --olive: #5c7a3c;
+  --navy: #1a3a5c;
+  --border: rgba(212,168,67,0.25);
+  --font-body: 'IM Fell English', serif;
+  --font-display: 'Cinzel', serif;
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-size: 17px;
+  --line-height: 1.8;
+  --radius: 8px;
+}
+/* Accommodation overrides */
+body.font-lexend { --font-body: 'Lexend', sans-serif; }
+body.font-dyslexic { --font-body: 'OpenDyslexic', sans-serif; }
+body.font-comic { --font-body: 'Comic Neue', cursive; }
+body.size-lg { --font-size: 20px; --line-height: 2.0; }
+body.size-xl { --font-size: 24px; --line-height: 2.2; }
+body.spacing-loose { --line-height: 2.4; }
+body.spacing-xloose { --line-height: 3.0; }
+body.high-contrast { --bg:#000;--bg2:#111;--surface:#1a1a1a;--surface2:#222;--text:#fff;--gold:#ff0;--parchment:#fff;--text-muted:#ccc; }
+body.light-mode { --bg:#f0e8d8;--bg2:#e8dcc8;--surface:#ddd0b8;--surface2:#d4c4a8;--text:#1a0e05;--text-muted:#5c3d1e;--border:rgba(90,60,20,0.3); }
+body.focus-mode .worksheet-section.active .reading-card:not(.focused) { opacity:0.25; }
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(26,90,150,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(212,168,67,0.08) 0%, transparent 50%);
+}
+
+/* ======== TOOLBAR ======== */
+#toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: rgba(13,27,42,0.97);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid var(--gold3);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.toolbar-label {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border-right: 1px solid var(--border);
+}
+.toolbar-group:last-child { border-right: none; }
+.tb-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-display);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: var(--surface2); border-color: var(--gold); }
+.tb-btn.active { background: var(--gold3); border-color: var(--gold); color: var(--parchment); }
+.tb-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.tts-btn {
+  background: var(--olive);
+  border: 1px solid #7a9c50;
+  color: #e8f5d0;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+}
+.tts-btn.speaking { animation: pulse 1s infinite; background: #8b1a1a; border-color: #c44; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+#progress-bar-wrap {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 6px;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+#progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold3), var(--gold), var(--gold2));
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+/* ======== HEADER ======== */
+#header {
+  text-align: center;
+  padding: 60px 20px 40px;
+  position: relative;
+  overflow: hidden;
+}
+#header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(212,168,67,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 60% at 50% 0%, rgba(26,58,92,0.8) 0%, transparent 80%);
+  pointer-events: none;
+}
+.header-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle 3s infinite;
+}
+@keyframes twinkle { 0%,100%{opacity:0.8;} 50%{opacity:0.2;} }
+.columns-row {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 24px;
+}
+.pixel-column {
+  width: 20px;
+  height: 80px;
+  background: linear-gradient(180deg, var(--gold2) 0%, var(--gold) 30%, var(--gold3) 100%);
+  position: relative;
+  border-radius: 2px;
+  box-shadow: 0 0 20px rgba(212,168,67,0.4);
+}
+.pixel-column::before {
+  content: '';
+  position: absolute;
+  top: -12px; left: -5px; right: -5px;
+  height: 12px;
+  background: var(--gold2);
+  border-radius: 2px;
+}
+.pixel-column::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; left: -4px; right: -4px;
+  height: 8px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+.header-eyebrow {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--gold);
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  position: relative;
+}
+.header-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 6vw, 64px);
+  font-weight: 900;
+  color: var(--gold2);
+  text-shadow: 0 0 40px rgba(212,168,67,0.5), 0 4px 20px rgba(0,0,0,0.8);
+  margin-bottom: 8px;
+  position: relative;
+  letter-spacing: 2px;
+}
+.header-subtitle {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--text-muted);
+  position: relative;
+}
+.header-divider {
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 20px auto 0;
+  position: relative;
+}
+
+/* ======== SECTIONS ======== */
+.worksheet-section { display: none; }
+.worksheet-section.active { display: block; animation: fadeSlideUp 0.4s ease; }
+@keyframes fadeSlideUp { from{opacity:0;transform:translateY(20px);} to{opacity:1;transform:translateY(0);} }
+
+.section-container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+.section-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.section-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.section-subtitle {
+  font-style: italic;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* ======== CARDS ======== */
+.reading-card {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--bg2) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 20px;
+  position: relative;
+  transition: opacity 0.3s;
+}
+.reading-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.card-label {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: var(--gold);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--gold2);
+  margin-bottom: 14px;
+}
+.card-body {
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--parchment);
+}
+.card-body p { margin-bottom: 12px; }
+.card-body p:last-child { margin-bottom: 0; }
+.moral-box {
+  background: rgba(212,168,67,0.12);
+  border-left: 4px solid var(--gold);
+  padding: 10px 16px;
+  margin-top: 14px;
+  font-style: italic;
+  border-radius: 0 4px 4px 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--gold2);
+}
+.tts-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(92,122,60,0.2);
+  border: 1px solid var(--olive);
+  color: #a8c870;
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-display);
+  margin-bottom: 14px;
+  transition: all 0.2s;
+}
+.tts-read-btn:hover { background: rgba(92,122,60,0.35); }
+.tts-read-btn.speaking { background: rgba(139,26,26,0.3); border-color:#c44; color:#ff9999; animation:pulse 1s infinite; }
+
+/* ======== QUESTIONS ======== */
+.question-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  margin-bottom: 14px;
+  transition: border-color 0.3s;
+}
+.question-card.answered { border-color: rgba(92,122,60,0.5); }
+.question-card.error { border-color: rgba(192,57,43,0.7); animation: shake 0.3s; }
+@keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.q-num {
+  display: inline-block;
+  background: var(--gold3);
+  color: var(--parchment);
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 22px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+.q-text {
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  color: var(--text);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+.mc-options { display: flex; flex-direction: column; gap: 8px; }
+.mc-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  background: rgba(255,255,255,0.02);
+}
+.mc-label:hover { background: rgba(212,168,67,0.08); border-color: var(--gold3); }
+.mc-label input[type="radio"] { margin-top: 4px; flex-shrink: 0; accent-color: var(--gold); transform: scale(1.3); }
+.mc-label.selected { background: rgba(212,168,67,0.12); border-color: var(--gold); }
+.sa-input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  padding: 12px 14px;
+  resize: vertical;
+  transition: border-color 0.2s;
+  min-height: 80px;
+}
+.sa-input:focus { outline: none; border-color: var(--gold); background: rgba(255,255,255,0.07); }
+.sa-input.extended { min-height: 140px; }
+.char-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 5px;
+  text-align: right;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+}
+.char-count.met { color: var(--olive); }
+
+/* ======== CONTINUE BUTTON ======== */
+.section-footer {
+  text-align: center;
+  margin-top: 32px;
+}
+.continue-btn {
+  background: linear-gradient(135deg, var(--gold3) 0%, var(--gold) 50%, var(--gold2) 100%);
+  color: #1a0e05;
+  border: none;
+  padding: 16px 48px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 6px 24px rgba(212,168,67,0.35);
+  letter-spacing: 1px;
+}
+.continue-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(212,168,67,0.5); }
+.continue-btn:active { transform: translateY(0); }
+.skip-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 12px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+.skip-btn:hover { border-color: var(--text-muted); color: var(--text); }
+.error-msg {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 10px;
+  display: none;
+  font-family: var(--font-pixel);
+  font-size: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* ======== STUDENT INFO ======== */
+.info-form { max-width: 480px; margin: 0 auto; }
+.form-row { display: flex; gap: 14px; margin-bottom: 18px; }
+.form-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+}
+.form-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 12px 14px;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.form-input:focus { outline: none; border-color: var(--gold); background: var(--surface2); }
+.form-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+.form-select:focus { outline: none; border-color: var(--gold); }
+
+/* ======== GAME SECTION ======== */
+#step-game { background: rgba(0,0,40,0.3); }
+.game-intro {
+  background: linear-gradient(135deg, #0d1b2a, #001040);
+  border: 2px solid var(--gold3);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: #88aaff;
+  line-height: 2;
+}
+.game-intro .game-title {
+  font-size: 13px;
+  color: var(--gold2);
+  margin-bottom: 10px;
+  display: block;
+}
+.game-controls-hint {
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  color: #aaffaa;
+  margin-top: 8px;
+}
+#game-container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  border: 3px solid var(--gold3);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,100,0.5);
+  background: #000060;
+  display: block;
+}
+#game-container canvas { display: block; width: 100% !important; height: auto !important; }
+#game-result {
+  display: none;
+  background: linear-gradient(135deg, var(--surface), var(--bg2));
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 16px;
+  text-align: center;
+}
+.game-result-title {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--gold2);
+  margin-bottom: 10px;
+}
+.game-result-rank {
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.game-result-score {
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  color: var(--gold);
+}
+#game-continue-btn {
+  display: none;
+  margin-top: 20px;
+}
+
+/* ======== CERTIFICATE ======== */
+#step-certificate .section-container { text-align: center; }
+#cert-canvas {
+  max-width: 100%;
+  border: 2px solid var(--gold3);
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(212,168,67,0.2);
+  display: block;
+  margin: 0 auto 20px;
+}
+.cert-instructions {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto 20px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+.cert-instructions h3 {
+  font-family: var(--font-display);
+  color: var(--gold);
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+.cert-instructions ol { padding-left: 20px; }
+.cert-instructions li { margin-bottom: 8px; }
+.cert-instructions a { color: var(--gold2); }
+.download-btn {
+  background: linear-gradient(135deg, #1a5c1a, #2d8f2d);
+  color: #e8f5d0;
+  border: none;
+  padding: 14px 40px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(46,143,46,0.35);
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.download-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(46,143,46,0.5); }
+
+/* ======== COMPLETION BADGE ======== */
+.completion-banner {
+  background: linear-gradient(135deg, rgba(212,168,67,0.15), rgba(212,168,67,0.05));
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+  animation: glow 2s ease-in-out infinite;
+}
+@keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(212,168,67,0.2);} 50%{box-shadow:0 0 40px rgba(212,168,67,0.5);} }
+.completion-banner .banner-icon { font-size: 40px; display: block; margin-bottom: 8px; }
+.completion-banner .banner-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ======== RESPONSIVE ======== */
+@media (max-width: 600px) {
+  .form-row { flex-direction: column; }
+  .toolbar-group { padding: 0 4px; gap: 3px; }
+  .tb-btn { font-size: 10px; padding: 3px 6px; }
+  .reading-card { padding: 18px; }
+  .question-card { padding: 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- PROGRESS BAR -->
+<div id="progress-bar-wrap"><div id="progress-bar-fill"></div></div>
+
+<!-- ACCOMMODATION TOOLBAR -->
+<div id="toolbar">
+  <div class="toolbar-group">
+    <span class="toolbar-label">Font</span>
+    <select class="tb-select" id="font-select" title="Change reading font">
+      <option value="default">Default</option>
+      <option value="lexend">Lexend</option>
+      <option value="dyslexic">OpenDyslexic</option>
+      <option value="comic">Comic Neue</option>
+    </select>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Size</span>
+    <button class="tb-btn" id="sz-normal" onclick="setSize('normal')">A</button>
+    <button class="tb-btn" id="sz-lg" onclick="setSize('lg')">A+</button>
+    <button class="tb-btn" id="sz-xl" onclick="setSize('xl')">A++</button>
+  </div>
+  <div class="toolbar-group">
+    <span class="toolbar-label">Spacing</span>
+    <button class="tb-btn" id="sp-normal" onclick="setSpacing('normal')">&#x2261;</button>
+    <button class="tb-btn" id="sp-loose" onclick="setSpacing('loose')">&#x2261;+</button>
+    <button class="tb-btn" id="sp-xloose" onclick="setSpacing('xloose')">&#x2261;++</button>
+  </div>
+  <div class="toolbar-group">
+    <button class="tb-btn" id="btn-light" onclick="toggleLight()">&#9728; Light</button>
+    <button class="tb-btn" id="btn-hc" onclick="toggleHC()">&#10044; Contrast</button>
+    <button class="tb-btn" id="btn-focus" onclick="toggleFocus()">&#9673; Focus</button>
+  </div>
+  <div class="toolbar-group">
+    <button class="tts-btn" id="global-tts-btn" onclick="toggleTTS()">&#128362; READ ALOUD: OFF</button>
+  </div>
+</div>
+
+<!-- HERO HEADER -->
+<div id="header">
+  <div class="header-stars" id="stars-container"></div>
+  <div class="columns-row">
+    <div class="pixel-column"></div>
+    <div class="pixel-column" style="height:100px;"></div>
+    <div class="pixel-column"></div>
+    <div class="pixel-column" style="height:90px;"></div>
+    <div class="pixel-column"></div>
+  </div>
+  <div class="header-eyebrow">Pioneer Middle School &bull; 7th Grade Social Studies</div>
+  <h1 class="header-title">Voyage to Ancient Greece</h1>
+  <p class="header-subtitle">Aesop&rsquo;s Fables &amp; Homer&rsquo;s Odyssey &mdash; A Digital Journey (~40 min)</p>
+  <div class="header-divider"></div>
+</div>
+
+<!-- =================== SECTION 0: STUDENT INFO =================== -->
+<div class="worksheet-section active" id="step-info">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-icon">🏺</span>
+      <h2 class="section-title">Begin Your Voyage</h2>
+      <p class="section-subtitle">Enter your information to unlock the journey</p>
+    </div>
+    <div class="info-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="first-name">First Name</label>
+          <input type="text" id="first-name" class="form-input" placeholder="Odysseus">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="last-name">Last Name</label>
+          <input type="text" id="last-name" class="form-input" placeholder="of Ithaca">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="class-period">Class Period</label>
+          <select id="class-period" class="form-select">
+            <option value="">-- Select Your Period --</option>
+            <option value="1st Hour">1st Hour</option>
+            <option value="2nd Hour">2nd Hour</option>
+            <option value="5th Hour">5th Hour</option>
+            <option value="6th Hour">6th Hour</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-footer">
+        <button class="continue-btn" onclick="startJourney()">Launch the Voyage ⚓</button>
+        <div class="error-msg" id="info-error">Please fill in all fields before continuing.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 1: AESOP'S FABLES =================== -->
+<div class="worksheet-section" id="step-fables">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-icon">🐢</span>
+      <h2 class="section-title">Part I: Aesop&rsquo;s Fables</h2>
+      <p class="section-subtitle">Ancient stories. Timeless lessons. ~12 minutes</p>
+    </div>
+
+    <!-- WHO WAS AESOP -->
+    <div class="reading-card focused" id="card-aesop-intro">
+      <div class="card-label">Background Reading</div>
+      <div class="card-title">Who Was Aesop?</div>
+      <button class="tts-read-btn" onclick="readCard('aesop-intro-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="aesop-intro-text">
+        <p>Aesop was an ancient Greek storyteller believed to have lived around <strong>620&ndash;564 BCE</strong>. Though historians debate whether Aesop was a real person, the fables credited to him have been told for over 2,500 years. He was said to have been born into slavery and eventually earned his freedom through his sharp wit and wisdom.</p>
+        <p>Aesop&rsquo;s <strong>fables</strong> are short stories that always feature animals as main characters. These animals speak and behave like humans, and each fable ends with a clear <strong>moral</strong> &mdash; a life lesson. The stories were originally passed down through <strong>oral tradition</strong> (storytelling by mouth) long before anyone wrote them down.</p>
+        <p>Some of Aesop&rsquo;s fables are so famous that we still use phrases from them every day &mdash; like &ldquo;Don&rsquo;t count your chickens before they hatch&rdquo; or &ldquo;Slow and steady wins the race.&rdquo;</p>
+      </div>
+    </div>
+
+    <!-- FABLE 1: TORTOISE AND HARE -->
+    <div class="reading-card" id="card-fable1">
+      <div class="card-label">Fable 1 of 3</div>
+      <div class="card-title">&#x1F422; The Tortoise and the Hare</div>
+      <button class="tts-read-btn" onclick="readCard('fable1-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="fable1-text">
+        <p>A hare was very proud of how fast he could run. One day he mocked a slow tortoise passing by. &ldquo;You are so slow!&rdquo; the hare laughed. &ldquo;You could never beat me in a race!&rdquo; The tortoise, tired of the hare&rsquo;s bragging, challenged him. &ldquo;Fine,&rdquo; said the hare, smirking. &ldquo;Let&rsquo;s race to the old oak tree!&rdquo;</p>
+        <p>The race began. The hare darted off so quickly that he was soon far ahead. Thinking he had plenty of time, he lay down in a sunny meadow for a nap. Meanwhile, the tortoise walked slowly but <em>steadily</em> &mdash; never stopping, never resting. When the hare finally woke up, he sprinted as fast as he could &mdash; but the tortoise was already crossing the finish line.</p>
+        <div class="moral-box">&#128218; Moral: <em>&ldquo;Slow and steady wins the race.&rdquo;</em></div>
+      </div>
+    </div>
+    <div id="questions-fable1"></div>
+
+    <!-- FABLE 2: BOY WHO CRIED WOLF -->
+    <div class="reading-card" id="card-fable2">
+      <div class="card-label">Fable 2 of 3</div>
+      <div class="card-title">&#x1F40A; The Boy Who Cried Wolf</div>
+      <button class="tts-read-btn" onclick="readCard('fable2-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="fable2-text">
+        <p>A young shepherd boy was bored watching his flock of sheep on a hillside near a village. To amuse himself, he ran toward the village crying, &ldquo;Wolf! Wolf! The wolf is chasing the sheep!&rdquo; The villagers came running to help, only to find the boy laughing at them. &ldquo;There&rsquo;s no wolf!&rdquo; he grinned.</p>
+        <p>He did it again a second time &mdash; same result. The villagers shook their heads and went home. Then one afternoon, a real wolf crept from the forest and began attacking the sheep. The boy cried &ldquo;Wolf! Wolf!&rdquo; with all his might &mdash; but this time, nobody came. They thought he was joking again. The boy had no one to blame but himself.</p>
+        <div class="moral-box">&#128218; Moral: <em>&ldquo;Nobody believes a liar, even when he is telling the truth.&rdquo;</em></div>
+      </div>
+    </div>
+    <div id="questions-fable2"></div>
+
+    <!-- FABLE 3: FOX AND GRAPES -->
+    <div class="reading-card" id="card-fable3">
+      <div class="card-label">Fable 3 of 3</div>
+      <div class="card-title">&#x1F98A; The Fox and the Grapes</div>
+      <button class="tts-read-btn" onclick="readCard('fable3-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="fable3-text">
+        <p>One hot summer day, a hungry fox wandered through a vineyard. High on a vine hung a beautiful bunch of ripe, purple grapes. &ldquo;Those look delicious!&rdquo; he thought. He jumped and jumped, reaching as high as he could &mdash; but the grapes were just out of reach.</p>
+        <p>After many failed attempts, the exhausted fox finally gave up and walked away. But before he did, he glanced back and said to himself, &ldquo;Those grapes were probably sour anyway. I didn&rsquo;t really want them.&rdquo;</p>
+        <div class="moral-box">&#128218; Moral: <em>&ldquo;It is easy to despise what you cannot have.&rdquo;</em></div>
+      </div>
+    </div>
+    <div id="questions-fable3"></div>
+
+    <div class="section-footer">
+      <button class="continue-btn" onclick="advanceSection('fables', 'step-game')">Sail to the Mini-Game! &#9876;</button>
+      <div class="error-msg" id="fables-error">Please answer all questions before continuing.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 2: MINI GAME =================== -->
+<div class="worksheet-section" id="step-game">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-icon">&#x1F3AE;</span>
+      <h2 class="section-title">Odyssey Runner!</h2>
+      <p class="section-subtitle">You&rsquo;ve earned a break, scholar! Guide Odysseus home.</p>
+    </div>
+    <div class="game-intro">
+      <span class="game-title">&#9876; ODYSSEY RUNNER &#9876;</span>
+      ODYSSEUS MUST RETURN TO ITHACA!<br>
+      DODGE THE CYCLOPS AND SIRENS.<br>
+      COLLECT GOLDEN AMPHORAS FOR POINTS.<br>
+      <span class="game-controls-hint">[ SPACEBAR or TAP TO JUMP ] &bull; [ 45 SECONDS ]</span>
+    </div>
+    <div id="game-container"></div>
+    <div id="game-result">
+      <div class="game-result-title">&#9876; JOURNEY COMPLETE &#9876;</div>
+      <div class="game-result-rank" id="result-rank">RANK: SAILOR</div>
+      <div class="game-result-score" id="result-score">AMPHORAS: 0</div>
+    </div>
+    <div class="section-footer">
+      <button class="continue-btn" id="game-continue-btn" onclick="advanceSection('game', 'step-odyssey')">Continue to The Odyssey &#127981;</button>
+      <button class="skip-btn" onclick="skipGame()">Skip game &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 3: THE ODYSSEY =================== -->
+<div class="worksheet-section" id="step-odyssey">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-icon">&#127981;</span>
+      <h2 class="section-title">Part II: Homer &amp; The Odyssey</h2>
+      <p class="section-subtitle">Epic poetry. Epic adventure. ~15 minutes</p>
+    </div>
+
+    <!-- WHO WAS HOMER -->
+    <div class="reading-card focused" id="card-homer-intro">
+      <div class="card-label">Background Reading</div>
+      <div class="card-title">Who Was Homer?</div>
+      <button class="tts-read-btn" onclick="readCard('homer-intro-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="homer-intro-text">
+        <p>Homer was an ancient Greek poet believed to have lived around <strong>750 BCE</strong>. He is credited with two of the most famous <strong>epic poems</strong> in all of history: the <em>Iliad</em> (about the Trojan War) and the <em>Odyssey</em> (about the hero&rsquo;s journey home).</p>
+        <p>Like Aesop, Homer&rsquo;s stories began as <strong>oral tradition</strong> &mdash; recited from memory by poets called <em>rhapsodes</em> who performed them at festivals. The poems are enormous: the Odyssey has over 12,000 lines!</p>
+        <p>The <em>Odyssey</em> follows <strong>Odysseus</strong> (called <em>Ulysses</em> in Roman mythology), the clever king of Ithaca, as he tries to return home after the 10-year Trojan War. But the journey takes him another <strong>10 years</strong>, filled with monsters, gods, and impossible choices. Odysseus is famous not for his strength &mdash; but for his <strong>cleverness</strong>.</p>
+      </div>
+    </div>
+
+    <!-- ODYSSEY EP 1: CYCLOPS -->
+    <div class="reading-card" id="card-odyssey1">
+      <div class="card-label">Episode 1 of 3 &bull; Book IX</div>
+      <div class="card-title">&#128065; Polyphemus the Cyclops</div>
+      <button class="tts-read-btn" onclick="readCard('odyssey1-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="odyssey1-text">
+        <p>Odysseus and his men land on a mysterious island and explore a giant cave full of food. Too late, they realize the cave belongs to <strong>Polyphemus</strong>, a Cyclops (a one-eyed giant) who is the son of the god Poseidon. The Cyclops traps them inside and begins eating two men per meal.</p>
+        <p>Odysseus must think fast. First, he finds a giant wooden stake, sharpens it to a point, and hides it. Then he offers Polyphemus strong wine until the Cyclops falls into a deep, drunken sleep. While the Cyclops sleeps, Odysseus and his men drive the burning stake into his one eye, blinding him.</p>
+        <p>When Polyphemus screams in agony, the other Cyclopes outside shout, &ldquo;Who is hurting you?!&rdquo; &mdash; and Polyphemus can only cry out, &ldquo;<strong>Nobody!</strong>&rdquo; Because Odysseus had told him earlier that his name was &ldquo;Nobody.&rdquo; The others assume Polyphemus is fine and leave. In the morning, the blinded Cyclops opens his cave door to let his sheep out &mdash; and Odysseus&rsquo;s men escape by clinging to the undersides of the sheep.</p>
+      </div>
+    </div>
+    <div id="questions-odyssey1"></div>
+
+    <!-- ODYSSEY EP 2: SIRENS -->
+    <div class="reading-card" id="card-odyssey2">
+      <div class="card-label">Episode 2 of 3 &bull; Book XII</div>
+      <div class="card-title">&#127929; The Sirens</div>
+      <button class="tts-read-btn" onclick="readCard('odyssey2-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="odyssey2-text">
+        <p>The <strong>Sirens</strong> were dangerous creatures with the bodies of birds and the faces of women. They sat on a rocky island and sang a magical, irresistible song. Any sailor who heard it became so enchanted that he would steer his ship toward the rocks &mdash; and crash and die. No one had ever survived hearing the Sirens&rsquo; song.</p>
+        <p>The goddess Circe warned Odysseus about the Sirens and told him exactly how to survive. Odysseus ordered all of his men to plug their ears tightly with <strong>beeswax</strong> so they could not hear the song at all. But Odysseus himself wanted to hear the legendary music &mdash; so he had his men tie him tightly to the ship&rsquo;s <strong>mast</strong>.</p>
+        <p>As the ship passed the island, Odysseus heard the Sirens&rsquo; song and was overcome with desperate longing. He screamed and begged his men to untie him so he could swim to them &mdash; but his loyal sailors refused, just as he had ordered. They rowed harder until the Sirens were far behind. Odysseus survived &mdash; but only because he planned ahead.</p>
+      </div>
+    </div>
+    <div id="questions-odyssey2"></div>
+
+    <!-- ODYSSEY EP 3: TROJAN HORSE -->
+    <div class="reading-card" id="card-odyssey3">
+      <div class="card-label">Episode 3 of 3 &bull; The Trojan War</div>
+      <div class="card-title">&#129474; The Trojan Horse</div>
+      <button class="tts-read-btn" onclick="readCard('odyssey3-text', this)">&#9654; Read Aloud</button>
+      <div class="card-body" id="odyssey3-text">
+        <p>The Trojan War had dragged on for <strong>ten years</strong>. The Greeks could not break through Troy&rsquo;s massive stone walls, and the Trojans could not drive the Greeks away. Then Odysseus came up with the most famous trick in history.</p>
+        <p>The Greeks built a <strong>giant wooden horse</strong>, large enough to hide a squad of their best soldiers inside. Then the entire Greek army <em>pretended</em> to sail away in defeat, leaving the horse on the beach as if it were an offering to the gods. One Greek soldier, <em>Sinon</em>, stayed behind to convince the Trojans that the horse was a sacred gift &mdash; and that bringing it inside the city walls would protect Troy.</p>
+        <p>The Trojans celebrated their apparent victory and dragged the enormous horse through their gates. That night, while the city slept, the Greek soldiers crept silently out of the horse, opened the city gates for their hidden army, and <strong>Troy fell</strong>. This plan &mdash; born in the mind of Odysseus &mdash; ended the longest war in Greek legend. To this day, a &ldquo;Trojan horse&rdquo; means any trick that gets inside an enemy&rsquo;s defenses disguised as something harmless.</p>
+      </div>
+    </div>
+    <div id="questions-odyssey3"></div>
+
+    <div class="section-footer">
+      <button class="continue-btn" onclick="advanceSection('odyssey', 'step-synthesis')">On to the Final Challenge! &#9758;</button>
+      <div class="error-msg" id="odyssey-error">Please answer all questions before continuing.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 4: SYNTHESIS =================== -->
+<div class="worksheet-section" id="step-synthesis">
+  <div class="section-container">
+    <div class="section-header">
+      <span class="section-icon">&#9997;</span>
+      <h2 class="section-title">Part III: Putting It Together</h2>
+      <p class="section-subtitle">Connect Aesop, Homer, and YOUR world. ~10 minutes</p>
+    </div>
+    <div class="reading-card">
+      <div class="card-body">
+        <p>You have now read three of Aesop&rsquo;s fables AND three key episodes from Homer&rsquo;s Odyssey. Both storytellers were ancient Greeks, and both used storytelling to teach lessons. Now it is your turn to think deeply about what connects these ancient stories &mdash; and what they still mean today.</p>
+      </div>
+    </div>
+    <div id="questions-synthesis"></div>
+    <div class="section-footer">
+      <button class="continue-btn" onclick="advanceSection('synthesis', 'step-certificate')">Claim Your Certificate! &#127942;</button>
+      <div class="error-msg" id="synthesis-error">Please answer all questions before continuing.</div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 5: CERTIFICATE =================== -->
+<div class="worksheet-section" id="step-certificate">
+  <div class="section-container">
+    <div class="completion-banner">
+      <span class="banner-icon">&#127942;</span>
+      <div class="banner-title">Voyage Complete, Scholar!</div>
+    </div>
+    <canvas id="cert-canvas"></canvas>
+    <div class="cert-instructions">
+      <h3>&#128190; Save Your Certificate to Google Drive</h3>
+      <ol>
+        <li>Click <strong>&ldquo;Download Certificate&rdquo;</strong> below. Your certificate will download as a PNG image file.</li>
+        <li>Open a new tab and go to <a href="https://drive.google.com" target="_blank" rel="noopener">drive.google.com</a>.</li>
+        <li>Click the <strong>+ New</strong> button (top-left corner).</li>
+        <li>Choose <strong>&ldquo;File Upload&rdquo;</strong> and select your downloaded certificate file.</li>
+        <li>The file will appear in <em>My Drive</em>. Right-click it and choose <strong>&ldquo;Share&rdquo;</strong> to share with Mr. Slaughter if required.</li>
+      </ol>
+    </div>
+    <button class="download-btn" onclick="downloadCertificate()">&#128190; Download Certificate</button>
+    <br>
+    <button class="skip-btn" onclick="openCertificateTab()" style="margin-top:10px;display:inline-block;">Can't download? Open image in new tab &rarr;</button>
+    <p style="color:var(--text-muted);font-size:13px;margin-top:8px;">File: voyage-certificate-[yourname].png</p>
+  </div>
+</div>
+
+<!-- =================== JAVASCRIPT =================== -->
+<script>
+'use strict';
+
+// ===== STATE =====
+const STATE = {
+  firstName: '', lastName: '', period: '',
+  gameScore: 0,
+  answers: {},
+  ttsEnabled: false,
+  currentUtterance: null
+};
+
+// ===== QUESTION DATA =====
+const QUESTIONS = [
+  // Fable 1
+  { id:'f1q1', group:'fable1', type:'mc', num:1,
+    text:'What is the <strong>moral (lesson)</strong> of &ldquo;The Tortoise and the Hare&rdquo;?',
+    options:['Never fall asleep during a competition','Slow and steady wins the race','Natural talent always beats hard work','You should never challenge someone faster than you'],
+    correct:1 },
+  { id:'f1q2', group:'fable1', type:'sa', num:2,
+    text:'Describe the <strong>hare&rsquo;s character</strong>. Use at least one specific detail from the story.',
+    min:20 },
+  { id:'f1q3', group:'fable1', type:'sa', num:3,
+    text:'Describe a <strong>real-life situation</strong> where the advice &ldquo;slow and steady wins the race&rdquo; would be useful.',
+    min:20 },
+  // Fable 2
+  { id:'f2q1', group:'fable2', type:'mc', num:4,
+    text:'Why did <strong>nobody come to help</strong> when the boy saw a real wolf?',
+    options:['The villagers were too far away to hear him','They thought he was joking again because he had lied twice before','The villagers were too afraid of wolves','It was nighttime and nobody could see the wolf'],
+    correct:1 },
+  { id:'f2q2', group:'fable2', type:'sa', num:5,
+    text:'What <strong>character trait</strong> does the boy show? Give a specific example from the story.',
+    min:20 },
+  { id:'f2q3', group:'fable2', type:'sa', num:6,
+    text:'In your own words, what does this fable teach us about <strong>honesty and trust</strong>?',
+    min:20 },
+  // Fable 3
+  { id:'f3q1', group:'fable3', type:'mc', num:7,
+    text:'What is the <strong>real reason</strong> the fox says the grapes are &ldquo;probably sour&rdquo;?',
+    options:['He tasted one earlier and it was sour','He is trying to feel better about failing to reach them','He prefers vegetables to fruit','He heard from another animal that they were sour'],
+    correct:1 },
+  { id:'f3q2', group:'fable3', type:'sa', num:8,
+    text:'How does the fox <strong>behave after failing</strong>? Use details from the story.',
+    min:20 },
+  { id:'f3q3', group:'fable3', type:'sa', num:9,
+    text:'Have you ever done something similar to the fox &mdash; pretended you didn&rsquo;t want something because you couldn&rsquo;t have it? Describe it (no real names needed).',
+    min:20 },
+  // Odyssey 1
+  { id:'o1q1', group:'odyssey1', type:'sa', num:10,
+    text:'How did Odysseus trick the Cyclops? Describe <strong>at least TWO tricks</strong> he used.',
+    min:30 },
+  { id:'o1q2', group:'odyssey1', type:'mc', num:11,
+    text:'Why was telling the Cyclops his name was <strong>&ldquo;Nobody&rdquo;</strong> such a clever trick?',
+    options:['It made the Cyclops laugh and forget about eating them','When Polyphemus screamed "Nobody hurt me!" the other Cyclopes thought nothing was wrong and left','The Cyclops could not remember names and got confused','Odysseus was actually called Nobody in his hometown'],
+    correct:1 },
+  { id:'o1q3', group:'odyssey1', type:'sa', num:12,
+    text:'Based on the Cyclops story, what <strong>kind of hero</strong> is Odysseus? What makes him different from a typical warrior hero?',
+    min:25 },
+  // Odyssey 2
+  { id:'o2q1', group:'odyssey2', type:'mc', num:13,
+    text:'How were the Sirens <strong>dangerous</strong> to sailors?',
+    options:['They fired magical arrows at passing ships','Their beautiful song enchanted sailors and lured ships onto the rocks','They called up storms that sank ships','They breathed fire and burned ships'],
+    correct:1 },
+  { id:'o2q2', group:'odyssey2', type:'sa', num:14,
+    text:'Why do you think Odysseus <strong>wanted to hear the Sirens&rsquo; song</strong> even though it was deadly?',
+    min:20 },
+  { id:'o2q3', group:'odyssey2', type:'sa', num:15,
+    text:'Do you think tying himself to the mast was a <strong>smart plan</strong>? Explain your thinking. What does this tell us about Odysseus?',
+    min:25 },
+  // Odyssey 3
+  { id:'o3q1', group:'odyssey3', type:'sa', num:16,
+    text:'Explain the Trojan Horse plan in your <strong>own words</strong>. What did the Greeks do, step by step?',
+    min:30 },
+  { id:'o3q2', group:'odyssey3', type:'mc', num:17,
+    text:'The phrase <strong>&ldquo;Beware of Greeks bearing gifts&rdquo;</strong> comes from this story. What does this phrase mean TODAY?',
+    options:['Always be suspicious of people from Greece','Be careful when someone gives you something &mdash; there might be a hidden motive','Gifts from strangers are always dangerous and should be refused','The Greeks were known for giving bad or useless presents'],
+    correct:1 },
+  { id:'o3q3', group:'odyssey3', type:'sa', num:18,
+    text:'Was the Trojan Horse plan <strong>clever, or was it unfair/dishonest</strong>? Explain your thinking with reasons.',
+    min:25 },
+  // Synthesis
+  { id:'sq1', group:'synthesis', type:'sa', num:19,
+    text:'Both Aesop&rsquo;s fables and Homer&rsquo;s <em>Odyssey</em> were passed down through <strong>oral tradition</strong> &mdash; storytelling by memory. What does this tell us about how ancient Greeks valued stories and lessons?',
+    min:40 },
+  { id:'sq2', group:'synthesis', type:'sa', num:20,
+    text:'Compare <strong>Odysseus to one of Aesop&rsquo;s animal characters</strong>. What lesson does each one teach? How are they similar or different?',
+    min:40 },
+  { id:'sq3', group:'synthesis', type:'sa', num:21,
+    text:'Which character from today&rsquo;s reading &mdash; a fable animal OR someone from the Odyssey &mdash; most reminds you of <strong>someone in real life</strong>? Explain why.',
+    min:40 },
+  { id:'sq4', group:'synthesis', type:'extended', num:22,
+    text:'<strong>EXTENDED RESPONSE:</strong> Choose <em>one</em> moral or lesson from today&rsquo;s reading (from a fable OR the Odyssey). Write <strong>3&ndash;5 sentences</strong> explaining: (1) what the lesson is, and (2) how a person TODAY could apply it in their own life.',
+    min:100, placeholder:'Write your extended response here (at least 3 sentences)...' }
+];
+
+// ===== RENDER QUESTIONS =====
+function renderQuestions(groupId, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  const qs = QUESTIONS.filter(q => q.group === groupId);
+  qs.forEach(q => {
+    const div = document.createElement('div');
+    div.className = 'question-card';
+    div.id = 'qcard-' + q.id;
+
+    const header = document.createElement('div');
+    header.className = 'q-text';
+    header.innerHTML = '<span class="q-num">' + q.num + '</span><span>' + q.text + '</span>';
+    div.appendChild(header);
+
+    if (q.type === 'mc') {
+      const opts = document.createElement('div');
+      opts.className = 'mc-options';
+      q.options.forEach((opt, i) => {
+        const lbl = document.createElement('label');
+        lbl.className = 'mc-label';
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = q.id;
+        radio.value = String(i);
+        radio.className = 'mc-radio';
+        radio.addEventListener('change', function() {
+          STATE.answers[q.id] = this.value;
+          document.getElementById('qcard-' + q.id).classList.add('answered');
+          document.querySelectorAll('[name="' + q.id + '"]').forEach(r => r.closest('label').classList.remove('selected'));
+          this.closest('label').classList.add('selected');
+        });
+        lbl.appendChild(radio);
+        const txt = document.createElement('span');
+        txt.innerHTML = ' ' + opt;
+        lbl.appendChild(txt);
+        opts.appendChild(lbl);
+      });
+      div.appendChild(opts);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.id = 'ans-' + q.id;
+      ta.className = q.type === 'extended' ? 'sa-input extended' : 'sa-input';
+      ta.placeholder = q.placeholder || 'Write your answer here (at least ' + q.min + ' characters)...';
+      ta.rows = q.type === 'extended' ? 6 : 3;
+      const cc = document.createElement('div');
+      cc.className = 'char-count';
+      cc.id = 'cc-' + q.id;
+      cc.textContent = '0 / ' + q.min + ' minimum';
+      ta.addEventListener('input', function() {
+        const len = this.value.trim().length;
+        cc.textContent = len + ' / ' + q.min + ' minimum';
+        cc.className = len >= q.min ? 'char-count met' : 'char-count';
+        if (len >= q.min) {
+          STATE.answers[q.id] = this.value.trim();
+          document.getElementById('qcard-' + q.id).classList.add('answered');
+        }
+      });
+      div.appendChild(ta);
+      div.appendChild(cc);
+    }
+    container.appendChild(div);
+  });
+}
+
+// ===== VALIDATE SECTION =====
+function validateSection(sectionId) {
+  const groups = {
+    fables: ['fable1','fable2','fable3'],
+    odyssey: ['odyssey1','odyssey2','odyssey3'],
+    synthesis: ['synthesis']
+  };
+  const relevant = (groups[sectionId] || []);
+  const qs = QUESTIONS.filter(q => relevant.includes(q.group));
+  let allOk = true;
+  qs.forEach(q => {
+    const card = document.getElementById('qcard-' + q.id);
+    if (q.type === 'mc') {
+      const selected = document.querySelector('[name="' + q.id + '"]:checked');
+      if (!selected) { allOk = false; if (card) card.classList.add('error'); setTimeout(() => card && card.classList.remove('error'), 600); }
+    } else {
+      const ta = document.getElementById('ans-' + q.id);
+      if (!ta || ta.value.trim().length < q.min) { allOk = false; if (card) card.classList.add('error'); setTimeout(() => card && card.classList.remove('error'), 600); }
+    }
+  });
+  return allOk;
+}
+
+// ===== NAVIGATION =====
+function startJourney() {
+  const fn = document.getElementById('first-name').value.trim();
+  const ln = document.getElementById('last-name').value.trim();
+  const per = document.getElementById('class-period').value;
+  if (!fn || !ln || !per) {
+    document.getElementById('info-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('info-error').style.display = 'none';
+  STATE.firstName = fn;
+  STATE.lastName = ln;
+  STATE.period = per;
+  showSection('step-fables');
+  updateProgress(1);
+}
+
+function advanceSection(currentId, nextId) {
+  if (currentId !== 'game' && !validateSection(currentId)) {
+    const errEl = document.getElementById(currentId + '-error');
+    if (errEl) { errEl.style.display = 'block'; setTimeout(() => errEl.style.display = 'none', 4000); }
+    return;
+  }
+  showSection(nextId);
+  const prog = {
+    'step-fables': 2, 'step-game': 3, 'step-odyssey': 4,
+    'step-synthesis': 5, 'step-certificate': 6
+  };
+  updateProgress(prog[nextId] || 1);
+  if (nextId === 'step-game') { setTimeout(initPhaserGame, 200); }
+  if (nextId === 'step-certificate') { setTimeout(generateCertificate, 300); }
+}
+
+function skipGame() {
+  destroyPhaserGame();
+  showSection('step-odyssey');
+  updateProgress(4);
+}
+
+function showSection(id) {
+  document.querySelectorAll('.worksheet-section').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('active');
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
+}
+
+function updateProgress(step) {
+  const pct = Math.round((step / 6) * 100);
+  document.getElementById('progress-bar-fill').style.width = pct + '%';
+}
+
+// ===== ACCOMMODATIONS =====
+document.getElementById('font-select').addEventListener('change', function() {
+  document.body.classList.remove('font-lexend','font-dyslexic','font-comic');
+  if (this.value !== 'default') document.body.classList.add('font-' + this.value);
+});
+function setSize(s) {
+  document.body.classList.remove('size-lg','size-xl');
+  if (s !== 'normal') document.body.classList.add('size-' + s);
+  ['sz-normal','sz-lg','sz-xl'].forEach(id => document.getElementById(id) && document.getElementById(id).classList.remove('active'));
+  document.getElementById('sz-' + s) && document.getElementById('sz-' + s).classList.add('active');
+}
+function setSpacing(s) {
+  document.body.classList.remove('spacing-loose','spacing-xloose');
+  if (s !== 'normal') document.body.classList.add('spacing-' + s);
+  ['sp-normal','sp-loose','sp-xloose'].forEach(id => document.getElementById(id) && document.getElementById(id).classList.remove('active'));
+  document.getElementById('sp-' + s) && document.getElementById('sp-' + s).classList.add('active');
+}
+function toggleLight() {
+  document.body.classList.toggle('light-mode');
+  document.getElementById('btn-light').classList.toggle('active');
+}
+function toggleHC() {
+  document.body.classList.toggle('high-contrast');
+  document.getElementById('btn-hc').classList.toggle('active');
+}
+function toggleFocus() {
+  document.body.classList.toggle('focus-mode');
+  document.getElementById('btn-focus').classList.toggle('active');
+}
+function toggleTTS() {
+  STATE.ttsEnabled = !STATE.ttsEnabled;
+  const btn = document.getElementById('global-tts-btn');
+  btn.textContent = '\u{1F4D2} READ ALOUD: ' + (STATE.ttsEnabled ? 'ON' : 'OFF');
+  if (!STATE.ttsEnabled && STATE.currentUtterance) { window.speechSynthesis.cancel(); STATE.currentUtterance = null; }
+}
+
+// ===== TTS =====
+function readCard(textId, btn) {
+  if (!('speechSynthesis' in window)) { alert('Text-to-speech is not supported in this browser.'); return; }
+  window.speechSynthesis.cancel();
+  if (btn.classList.contains('speaking')) { btn.classList.remove('speaking'); btn.textContent = '\u25B6 Read Aloud'; STATE.currentUtterance = null; return; }
+  document.querySelectorAll('.tts-read-btn.speaking').forEach(b => { b.classList.remove('speaking'); b.textContent = '\u25B6 Read Aloud'; });
+  const el = document.getElementById(textId);
+  if (!el) return;
+  const text = el.innerText || el.textContent;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  utterance.lang = 'en-US';
+  utterance.onstart = () => { btn.classList.add('speaking'); btn.textContent = '\u23F9 Stop Reading'; };
+  utterance.onend = () => { btn.classList.remove('speaking'); btn.textContent = '\u25B6 Read Aloud'; STATE.currentUtterance = null; };
+  utterance.onerror = () => { btn.classList.remove('speaking'); btn.textContent = '\u25B6 Read Aloud'; };
+  STATE.currentUtterance = utterance;
+  window.speechSynthesis.speak(utterance);
+}
+
+// ===== PHASER GAME =====
+let phaserGame = null;
+
+class OdysseyScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'OdysseyScene' });
+    this.ody = { x: 70, y: 0, velY: 0, jumping: false };
+    this.groundY = 0;
+    this.gameActive = false;
+    this.score = 0;
+    this.timeLeft = 45;
+    this.obstacles = [];
+    this.spawnEvt = null;
+    this.clockEvt = null;
+    this.gfxOdy = null;
+    this.scoreText = null;
+    this.timeText = null;
+    this.spaceKey = null;
+  }
+
+  create() {
+    const W = this.scale.width, H = this.scale.height;
+    this.groundY = H - 48;
+    this.ody.y = this.groundY - 40;
+
+    // Sky
+    const sky = this.add.graphics();
+    for (let y = 0; y < H - 48; y += 4) {
+      const c = Phaser.Display.Color.Interpolate.ColorWithColor(
+        { r: 0, g: 0, b: 80 }, { r: 0, g: 20, b: 120 }, (H - 48) / 4, y / 4
+      );
+      sky.fillStyle(Phaser.Display.Color.GetColor(c.r, c.g, c.b));
+      sky.fillRect(0, y, W, 4);
+    }
+
+    // Stars
+    const sg = this.add.graphics();
+    sg.fillStyle(0xffffff);
+    for (let i = 0; i < 50; i++) {
+      sg.fillRect(
+        Phaser.Math.Between(0, W),
+        Phaser.Math.Between(0, Math.floor(H * 0.6)),
+        Phaser.Math.Between(1, 2), Phaser.Math.Between(1, 2)
+      );
+    }
+
+    // Sea/ground
+    this.add.rectangle(W / 2, H - 24, W, 48, 0x001a4d);
+    const wg = this.add.graphics();
+    wg.fillStyle(0x0044aa);
+    for (let x = 0; x < W; x += 24) {
+      wg.fillRect(x, this.groundY, 12, 6);
+    }
+    const pg = this.add.graphics();
+    pg.fillStyle(0x7a4e2a);
+    pg.fillRect(0, this.groundY, W, 8);
+
+    // HUD
+    this.scoreText = this.add.text(8, 8, 'AMPHORA: 0', {
+      fontFamily: '"Press Start 2P", monospace', fontSize: '8px', color: '#d4a843'
+    }).setDepth(10);
+    this.timeText = this.add.text(W - 8, 8, 'TIME: 45', {
+      fontFamily: '"Press Start 2P", monospace', fontSize: '8px', color: '#ffffff'
+    }).setOrigin(1, 0).setDepth(10);
+
+    // Moon
+    const moon = this.add.graphics();
+    moon.fillStyle(0xffffc0);
+    moon.fillCircle(W - 40, 30, 18);
+    moon.fillStyle(0x000050);
+    moon.fillCircle(W - 46, 25, 12);
+
+    // Start text
+    this.startText = this.add.text(W / 2, H / 2, 'PRESS SPACE\n  OR TAP!', {
+      fontFamily: '"Press Start 2P", monospace', fontSize: '10px',
+      color: '#ffffff', align: 'center', backgroundColor: '#00000099',
+      padding: { x: 10, y: 6 }
+    }).setOrigin(0.5).setDepth(10);
+
+    // Odysseus
+    this.gfxOdy = this.add.graphics().setDepth(5);
+    this.drawOdysseus();
+
+    // Input
+    this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    this.input.on('pointerdown', () => this.handleInput());
+    this.spaceKey.on('down', () => this.handleInput());
+  }
+
+  handleInput() {
+    if (!this.gameActive) { this.startGame(); return; }
+    this.doJump();
+  }
+
+  startGame() {
+    this.gameActive = true;
+    if (this.startText) { this.startText.destroy(); this.startText = null; }
+    this.spawnEvt = this.time.addEvent({
+      delay: 1700, callback: this.spawnObstacle, callbackScope: this, loop: true
+    });
+    this.clockEvt = this.time.addEvent({
+      delay: 1000, callback: this.tickClock, callbackScope: this, loop: true
+    });
+  }
+
+  doJump() {
+    if (!this.ody.jumping) {
+      this.ody.jumping = true;
+      this.ody.velY = -16;
+    }
+  }
+
+  drawOdysseus() {
+    const g = this.gfxOdy;
+    const x = this.ody.x, y = this.ody.y;
+    g.clear();
+    g.fillStyle(0xd4a843); g.fillRect(x + 5, y - 5, 18, 6);
+    g.fillStyle(0xd4956a); g.fillRect(x + 7, y + 1, 12, 10);
+    g.fillStyle(0x000); g.fillRect(x + 9, y + 4, 3, 3); g.fillRect(x + 14, y + 4, 3, 3);
+    g.fillStyle(0xe8dcc8); g.fillRect(x + 5, y + 11, 18, 16);
+    g.fillStyle(0xd4a843); g.fillRect(x + 5, y + 19, 18, 3);
+    g.fillStyle(0xd4956a); g.fillRect(x + 1, y + 12, 5, 10); g.fillRect(x + 22, y + 12, 5, 10);
+    g.fillStyle(0x8b5e3c); g.fillRect(x - 4, y + 10, 7, 14);
+    g.fillStyle(0xd4a843); g.fillRect(x - 4, y + 14, 7, 2); g.fillRect(x - 1, y + 11, 2, 10);
+    g.fillStyle(0xaaaaaa); g.fillRect(x + 26, y + 10, 3, 20);
+    g.fillStyle(0xd4a843); g.fillRect(x + 23, y + 14, 9, 3);
+    g.fillStyle(0xd4956a); g.fillRect(x + 5, y + 27, 7, 12); g.fillRect(x + 15, y + 27, 7, 12);
+    g.fillStyle(0x8b4513); g.fillRect(x + 4, y + 37, 9, 3); g.fillRect(x + 14, y + 37, 9, 3);
+  }
+
+  spawnObstacle() {
+    if (!this.gameActive) return;
+    const W = this.scale.width;
+    const rng = Math.random();
+    const isAmphora = rng < 0.38;
+    const isCyclops = !isAmphora && rng < 0.7;
+    const g = this.add.graphics().setDepth(4);
+    const speed = Phaser.Math.Between(3, 6);
+    let ob;
+    if (isAmphora) {
+      this.drawAmphora(g, 0, 0);
+      ob = { gfx: g, x: W + 10, w: 16, h: 26, gy: this.groundY - 26, speed, isCollect: true };
+    } else if (isCyclops) {
+      this.drawCyclops(g, 0, 0);
+      ob = { gfx: g, x: W + 10, w: 28, h: 52, gy: this.groundY - 52, speed };
+    } else {
+      this.drawSiren(g, 0, 0);
+      ob = { gfx: g, x: W + 10, w: 28, h: 42, gy: this.groundY - 42, speed };
+    }
+    g.x = ob.x; g.y = ob.gy;
+    this.obstacles.push(ob);
+  }
+
+  drawCyclops(g, x, y) {
+    g.fillStyle(0x3a6b30); g.fillRect(x + 5, y + 28, 18, 24);
+    g.fillStyle(0x4a8b40); g.fillRect(x + 3, y + 16, 22, 14);
+    g.fillStyle(0x5aab50); g.fillRect(x + 1, y, 26, 18);
+    g.fillStyle(0xff3300); g.fillRect(x + 7, y + 4, 14, 11);
+    g.fillStyle(0x000); g.fillRect(x + 12, y + 7, 5, 5);
+    g.fillStyle(0xfff); g.fillRect(x + 8, y + 6, 4, 3); g.fillRect(x + 17, y + 6, 4, 3);
+    g.fillStyle(0x6b3a1a); g.fillRect(x + 28, y - 8, 5, 36);
+    g.fillStyle(0x8b5e3c); g.fillRect(x + 24, y - 14, 13, 12);
+    g.fillStyle(0x3a6b30); g.fillRect(x + 5, y + 42, 8, 10); g.fillRect(x + 15, y + 42, 8, 10);
+  }
+
+  drawSiren(g, x, y) {
+    g.fillStyle(0x4d2673); g.fillRect(x + 7, y + 24, 14, 18);
+    g.fillStyle(0x7744aa); g.fillRect(x, y + 14, 9, 14); g.fillRect(x + 19, y + 14, 9, 14);
+    g.fillStyle(0x9966cc); g.fillRect(x + 6, y + 10, 16, 16);
+    g.fillStyle(0xd4956a); g.fillRect(x + 8, y, 12, 12);
+    g.fillStyle(0xffcc44); g.fillRect(x + 6, y, 16, 4); g.fillRect(x + 4, y + 4, 4, 10); g.fillRect(x + 20, y + 4, 4, 10);
+    g.fillStyle(0x000); g.fillRect(x + 10, y + 3, 3, 3); g.fillRect(x + 15, y + 3, 3, 3);
+    g.fillStyle(0xff7777); g.fillRect(x + 10, y + 8, 8, 3);
+  }
+
+  drawAmphora(g, x, y) {
+    g.fillStyle(0xd4a843); g.fillRect(x + 5, y, 6, 5);
+    g.fillStyle(0xc89830); g.fillRect(x + 2, y + 5, 12, 16); g.fillRect(x + 4, y + 21, 8, 5);
+    g.fillStyle(0x8b6914); g.fillRect(x, y + 6, 3, 10); g.fillRect(x + 13, y + 6, 3, 10);
+    g.fillStyle(0xd4a843); g.fillRect(x + 2, y + 5, 12, 2); g.fillRect(x + 2, y + 18, 12, 2);
+    g.fillStyle(0xfff44f); g.fillRect(x + 6, y + 2, 2, 9);
+  }
+
+  tickClock() {
+    this.timeLeft--;
+    this.timeText.setText('TIME: ' + this.timeLeft);
+    if (this.timeLeft <= 10) this.timeText.setColor('#ff4444');
+    if (this.timeLeft <= 0) this.endGame();
+  }
+
+  endGame() {
+    if (!this.gameActive) return;
+    this.gameActive = false;
+    if (this.spawnEvt) { this.spawnEvt.remove(); this.spawnEvt = null; }
+    if (this.clockEvt) { this.clockEvt.remove(); this.clockEvt = null; }
+    this.obstacles.forEach(ob => ob.gfx.destroy());
+    this.obstacles = [];
+    const W = this.scale.width, H = this.scale.height;
+    this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.75).setDepth(30);
+    let rank = 'SAILOR'; let color = '#88ccff';
+    if (this.score >= 8) { rank = 'HERO OF TROY'; color = '#ffd700'; }
+    else if (this.score >= 5) { rank = 'ODYSSEUS'; color = '#d4a843'; }
+    else if (this.score >= 3) { rank = 'WARRIOR'; color = '#aaffaa'; }
+    this.add.text(W / 2, H / 2 - 52, '== ODYSSEY COMPLETE ==', { fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#d4a843' }).setOrigin(0.5).setDepth(31);
+    this.add.text(W / 2, H / 2 - 28, 'RANK: ' + rank, { fontFamily: '"Press Start 2P"', fontSize: '9px', color: color }).setOrigin(0.5).setDepth(31);
+    this.add.text(W / 2, H / 2 - 4, 'AMPHORAS: ' + this.score, { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#d4a843' }).setOrigin(0.5).setDepth(31);
+    this.add.text(W / 2, H / 2 + 24, 'CONTINUE YOUR\nJOURNEY, SCHOLAR!', { fontFamily: '"Press Start 2P"', fontSize: '7px', color: '#aaffaa', align: 'center' }).setOrigin(0.5).setDepth(31);
+    setTimeout(() => {
+      if (window.onGameComplete) window.onGameComplete(this.score, rank);
+    }, 400);
+  }
+
+  update() {
+    if (!this.gameActive) return;
+    if (this.ody.jumping) {
+      this.ody.y += this.ody.velY;
+      this.ody.velY += 0.88;
+      if (this.ody.y >= this.groundY - 40) {
+        this.ody.y = this.groundY - 40;
+        this.ody.jumping = false;
+        this.ody.velY = 0;
+      }
+    }
+    this.drawOdysseus();
+
+    const toRemove = new Set();
+    for (let i = 0; i < this.obstacles.length; i++) {
+      const ob = this.obstacles[i];
+      ob.x -= ob.speed;
+      ob.gfx.x = ob.x;
+      if (ob.x < -80) { toRemove.add(i); continue; }
+      const ox1 = ob.x + 3, ox2 = ob.x + ob.w - 3;
+      const oy1 = ob.gfx.y + 3, oy2 = ob.gfx.y + ob.h - 3;
+      const ux1 = this.ody.x + 3, ux2 = this.ody.x + 28;
+      const uy1 = this.ody.y + 3, uy2 = this.ody.y + 40;
+      if (ox2 > ux1 && ox1 < ux2 && oy2 > uy1 && oy1 < uy2) {
+        toRemove.add(i);
+        if (ob.isCollect) {
+          this.score++;
+          this.scoreText.setText('AMPHORA: ' + this.score);
+          const ft = this.add.text(ob.x + ob.w / 2, ob.gfx.y, '+1', { fontFamily: '"Press Start 2P"', fontSize: '8px', color: '#ffff00' }).setOrigin(0.5).setDepth(20);
+          this.tweens.add({ targets: ft, y: ft.y - 35, alpha: 0, duration: 700, onComplete: () => ft.destroy() });
+        } else {
+          this.cameras.main.shake(160, 0.012);
+          const flash = this.add.rectangle(this.scale.width / 2, this.scale.height / 2, this.scale.width, this.scale.height, 0xff0000, 0.28).setDepth(20);
+          this.tweens.add({ targets: flash, alpha: 0, duration: 350, onComplete: () => flash.destroy() });
+        }
+      }
+    }
+    if (toRemove.size > 0) {
+      const sorted = [...toRemove].sort((a, b) => b - a);
+      sorted.forEach(i => { this.obstacles[i].gfx.destroy(); this.obstacles.splice(i, 1); });
+    }
+  }
+}
+
+function initPhaserGame() {
+  if (phaserGame) return;
+  const container = document.getElementById('game-container');
+  if (!container) return;
+  const config = {
+    type: Phaser.CANVAS,
+    width: 480,
+    height: 220,
+    parent: 'game-container',
+    backgroundColor: '#000060',
+    scene: OdysseyScene,
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    input: { keyboard: true, touch: true, mouse: true }
+  };
+  phaserGame = new Phaser.Game(config);
+}
+
+function destroyPhaserGame() {
+  if (phaserGame) { phaserGame.destroy(true); phaserGame = null; }
+}
+
+window.onGameComplete = function(score, rank) {
+  STATE.gameScore = score;
+  const resultDiv = document.getElementById('game-result');
+  resultDiv.style.display = 'block';
+  document.getElementById('result-rank').textContent = 'RANK: ' + (rank || 'SAILOR');
+  document.getElementById('result-score').textContent = 'AMPHORAS COLLECTED: ' + score;
+  document.getElementById('game-continue-btn').style.display = 'inline-block';
+  setTimeout(destroyPhaserGame, 1000);
+};
+
+// ===== CERTIFICATE =====
+async function generateCertificate() {
+  await document.fonts.ready;
+  const canvas = document.getElementById('cert-canvas');
+  canvas.width = 800;
+  canvas.height = 560;
+  const ctx = canvas.getContext('2d');
+  const W = 800, H = 560;
+  const fn = STATE.firstName || 'Student';
+  const ln = STATE.lastName || '';
+  const per = STATE.period || 'Unknown';
+  const gs = STATE.gameScore;
+  const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Background gradient (parchment)
+  const bgGrad = ctx.createRadialGradient(W / 2, H / 2, 50, W / 2, H / 2, W * 0.7);
+  bgGrad.addColorStop(0, '#f8f0df');
+  bgGrad.addColorStop(1, '#ead9b8');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Outer border (gold)
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 12;
+  ctx.strokeRect(6, 6, W - 12, H - 12);
+
+  // Inner border (dark)
+  ctx.strokeStyle = '#5c3d1e';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(22, 22, W - 44, H - 44);
+
+  // Thin gold inner
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(28, 28, W - 56, H - 56);
+
+  // Corner diamonds
+  [[28,28],[W-28,28],[28,H-28],[W-28,H-28]].forEach(([cx,cy]) => {
+    ctx.fillStyle = '#d4a843';
+    ctx.beginPath(); ctx.moveTo(cx,cy-12); ctx.lineTo(cx+12,cy); ctx.lineTo(cx,cy+12); ctx.lineTo(cx-12,cy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#f5ede0';
+    ctx.beginPath(); ctx.moveTo(cx,cy-6); ctx.lineTo(cx+6,cy); ctx.lineTo(cx,cy+6); ctx.lineTo(cx-6,cy); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#5c3d1e';
+    ctx.fillRect(cx-2, cy-2, 4, 4);
+  });
+
+  // Top decorative band
+  ctx.fillStyle = '#d4a843';
+  ctx.fillRect(36, 36, W - 72, 4);
+  ctx.fillRect(36, 44, W - 72, 1.5);
+
+  // Bottom band
+  ctx.fillRect(36, H - 40, W - 72, 4);
+  ctx.fillRect(36, H - 46, W - 72, 1.5);
+
+  // Olive branch hint (arcs above title)
+  ctx.fillStyle = '#5c7a3c';
+  for (let i = 0; i < 18; i++) {
+    const angle = (i / 18) * Math.PI;
+    const rx = 90, ry = 22;
+    const lx = W / 2 - rx * Math.cos(angle);
+    const ly = 102 - ry * Math.sin(angle);
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle + Math.PI / 2);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 7, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // Stem
+  ctx.strokeStyle = '#5c7a3c';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 90, 102);
+  ctx.quadraticCurveTo(W / 2, 78, W / 2 + 90, 102);
+  ctx.stroke();
+
+  // Institution
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#5c3d1e';
+  ctx.font = '600 12px "Cinzel", serif';
+  ctx.fillText('PIONEER MIDDLE SCHOOL  \u00B7  7TH GRADE SOCIAL STUDIES  \u00B7  MR. SLAUGHTER', W / 2, 72);
+
+  // Title
+  ctx.fillStyle = '#8b6914';
+  ctx.font = 'bold 36px "Cinzel", serif';
+  ctx.fillText('Certificate of Completion', W / 2, 138);
+
+  // Subtitle
+  ctx.fillStyle = '#5c3d1e';
+  ctx.font = 'italic 16px "IM Fell English", serif';
+  ctx.fillText('\u2014 Voyage to Ancient Greece \u2014', W / 2, 165);
+
+  // Divider
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 1;
+  const dw = 180;
+  ctx.beginPath(); ctx.moveTo(W/2-dw, 180); ctx.lineTo(W/2+dw, 180); ctx.stroke();
+  ctx.fillStyle = '#d4a843';
+  ctx.beginPath(); ctx.arc(W/2-dw, 180, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W/2+dw, 180, 3, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(W/2, 180, 3, 0, Math.PI*2); ctx.fill();
+
+  // Certify text
+  ctx.fillStyle = '#3d1a0a';
+  ctx.font = 'italic 16px "IM Fell English", serif';
+  ctx.fillText('This certifies that', W / 2, 214);
+
+  // Student name
+  const fullName = fn + ' ' + ln;
+  ctx.fillStyle = '#1a0a00';
+  ctx.font = 'bold 40px "Cinzel", serif';
+  ctx.fillText(fullName, W / 2, 270);
+
+  // Name underline
+  const nw = ctx.measureText(fullName).width;
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - nw/2 - 20, 282);
+  ctx.lineTo(W/2 + nw/2 + 20, 282);
+  ctx.stroke();
+
+  // Achievement text
+  ctx.fillStyle = '#3d1a0a';
+  ctx.font = '16px "IM Fell English", serif';
+  ctx.fillText('has successfully completed the', W / 2, 318);
+  ctx.font = 'bold italic 18px "IM Fell English", serif';
+  ctx.fillText("Aesop's Fables & Homer's Odyssey Digital Worksheet", W / 2, 344);
+
+  // Stats
+  ctx.font = '13px "Cinzel", serif';
+  ctx.fillStyle = '#5c3d1e';
+  ctx.textAlign = 'left';
+  ctx.fillText('Class: ' + per, 90, 384);
+  ctx.textAlign = 'center';
+  ctx.fillText(date, W / 2, 384);
+  ctx.textAlign = 'right';
+  ctx.fillText('Game Score: ' + gs + ' Amphoras', W - 90, 384);
+
+  // Bottom divider
+  ctx.textAlign = 'center';
+  ctx.strokeStyle = '#d4a843';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(100, 404); ctx.lineTo(W - 100, 404); ctx.stroke();
+
+  // PixelED Path badge
+  ctx.fillStyle = '#d4a843';
+  ctx.font = '9px "Press Start 2P", monospace';
+  ctx.fillText('[ PIXELED PATH LLC * EDUCATIONAL ACHIEVEMENT ]', W / 2, 440);
+
+  // Signature line
+  ctx.strokeStyle = '#5c3d1e';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W/2-130, 504); ctx.lineTo(W/2+130, 504); ctx.stroke();
+  ctx.fillStyle = '#3d1a0a';
+  ctx.font = 'italic 14px "IM Fell English", serif';
+  ctx.fillText('Mr. Slaughter, 7th Grade Social Studies', W / 2, 522);
+  ctx.fillStyle = '#5c3d1e';
+  ctx.font = '12px "Cinzel", serif';
+  ctx.fillText('Pioneer Middle School  |  PCCSK12', W / 2, 542);
+}
+
+function downloadCertificate() {
+  const canvas = document.getElementById('cert-canvas');
+  if (!canvas || canvas.width === 0) { alert('Certificate not ready yet — please wait a moment and try again.'); return; }
+  const fn = (STATE.firstName + '-' + STATE.lastName).replace(/\s+/g, '-').toLowerCase() || 'student';
+  try {
+    const dataURL = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.download = 'voyage-certificate-' + fn + '.png';
+    link.href = dataURL;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => document.body.removeChild(link), 200);
+  } catch(e) {
+    openCertificateTab();
+  }
+}
+
+function openCertificateTab() {
+  const canvas = document.getElementById('cert-canvas');
+  if (!canvas) return;
+  try {
+    const dataURL = canvas.toDataURL('image/png');
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write('<html><body style="margin:0;background:#1a0e05;text-align:center;"><p style="color:#d4a843;font-family:serif;padding:10px;">Right-click the image below and choose <strong>Save image as...</strong></p><img src="' + dataURL + '" style="max-width:100%;"></body></html>');
+      win.document.close();
+    } else {
+      alert('Pop-up blocked. Please right-click the certificate above and choose "Save image as..."');
+    }
+  } catch(e) {
+    alert('Please right-click the certificate image above and choose "Save image as..."');
+  }
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', function() {
+  // Render all questions
+  renderQuestions('fable1', 'questions-fable1');
+  renderQuestions('fable2', 'questions-fable2');
+  renderQuestions('fable3', 'questions-fable3');
+  renderQuestions('odyssey1', 'questions-odyssey1');
+  renderQuestions('odyssey2', 'questions-odyssey2');
+  renderQuestions('odyssey3', 'questions-odyssey3');
+  renderQuestions('synthesis', 'questions-synthesis');
+
+  // Generate stars in header
+  const container = document.getElementById('stars-container');
+  if (container) {
+    for (let i = 0; i < 60; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      const size = Math.random() < 0.2 ? 3 : Math.random() < 0.5 ? 2 : 1;
+      star.style.cssText = `
+        width:${size}px; height:${size}px;
+        top:${Math.random()*90}%;
+        left:${Math.random()*100}%;
+        animation-delay:${Math.random()*3}s;
+        animation-duration:${2+Math.random()*3}s;
+        opacity:${0.3+Math.random()*0.7};
+      `;
+      container.appendChild(star);
+    }
+  }
+
+  // Active size/spacing default
+  document.getElementById('sz-normal').classList.add('active');
+  document.getElementById('sp-normal').classList.add('active');
+});
+</script>
+</body>
+</html>
